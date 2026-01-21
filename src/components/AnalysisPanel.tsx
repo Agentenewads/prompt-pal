@@ -11,6 +11,8 @@ interface AnalysisPanelProps {
   onApplyAll: () => void;
   appliedIds: Set<string>;
   isAnalyzing: boolean;
+  score?: number | null;
+  summary?: string;
   className?: string;
 }
 
@@ -21,18 +23,31 @@ export function AnalysisPanel({
   onApplyAll,
   appliedIds,
   isAnalyzing,
+  score,
+  summary,
   className,
 }: AnalysisPanelProps) {
   const pendingSuggestions = suggestions.filter((s) => !appliedIds.has(s.id));
   const appliedCount = appliedIds.size;
   const totalCount = suggestions.length;
+  
+  const getScoreColor = (s: number) => {
+    if (s >= 80) return "text-success";
+    if (s >= 60) return "text-warning";
+    return "text-destructive";
+  };
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-foreground">Análise</h3>
+          <h3 className="font-semibold text-foreground">Análise IA</h3>
+          {score !== null && score !== undefined && (
+            <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full bg-secondary", getScoreColor(score))}>
+              {score}/100
+            </span>
+          )}
           {totalCount > 0 && (
             <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
               {appliedCount}/{totalCount}
@@ -46,6 +61,12 @@ export function AnalysisPanel({
           </Button>
         )}
       </div>
+      
+      {summary && (
+        <div className="px-4 py-3 bg-secondary/50 border-b border-border">
+          <p className="text-sm text-muted-foreground">{summary}</p>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-3">
         {isAnalyzing ? (
