@@ -5,9 +5,11 @@ import { ObjectiveInput } from "@/components/ObjectiveInput";
 import { AnalysisPanel } from "@/components/AnalysisPanel";
 import { OutputPanel } from "@/components/OutputPanel";
 import { Button } from "@/components/ui/button";
-import { analyzePrompt, applyIndividualSuggestion } from "@/lib/promptAnalyzer";
+import { analyzePromptWithAI } from "@/lib/aiAnalyzer";
+import { applyIndividualSuggestion } from "@/lib/promptAnalyzer";
 import type { Suggestion } from "@/components/SuggestionCard";
 import { Sparkles, RotateCcw, ArrowRight, Code2 } from "lucide-react";
+import { toast } from "sonner";
 
 const Index = () => {
   const [prompt, setPrompt] = useState("");
@@ -17,6 +19,8 @@ const Index = () => {
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showOutput, setShowOutput] = useState(false);
+  const [analysisScore, setAnalysisScore] = useState<number | null>(null);
+  const [analysisSummary, setAnalysisSummary] = useState("");
 
   const handleAnalyze = useCallback(async () => {
     if (!prompt.trim()) return;
@@ -25,14 +29,22 @@ const Index = () => {
     setSuggestions([]);
     setAppliedIds(new Set());
     setShowOutput(false);
+    setAnalysisScore(null);
+    setAnalysisSummary("");
 
-    // Simulate analysis delay for better UX
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    const result = analyzePrompt(prompt, objective);
-    setSuggestions(result.suggestions);
-    setOptimizedPrompt(result.optimizedPrompt);
-    setIsAnalyzing(false);
+    try {
+      const result = await analyzePromptWithAI(prompt, objective);
+      setSuggestions(result.suggestions);
+      setOptimizedPrompt(result.optimizedPrompt);
+      setAnalysisScore(result.score);
+      setAnalysisSummary(result.summary);
+      toast.success("Análise concluída com sucesso!");
+    } catch (error) {
+      console.error("Analysis error:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao analisar prompt");
+    } finally {
+      setIsAnalyzing(false);
+    }
   }, [prompt, objective]);
 
   const handleApplySuggestion = useCallback((id: string) => {
@@ -68,13 +80,14 @@ const Index = () => {
     setOptimizedPrompt("");
     setAppliedIds(new Set());
     setShowOutput(false);
+    setAnalysisScore(null);
+    setAnalysisSummary("");
   }, []);
 
   const handleFinalize = useCallback(() => {
-    const result = analyzePrompt(prompt, objective);
-    setOptimizedPrompt(result.optimizedPrompt);
+    // Use the already optimized prompt from AI analysis
     setShowOutput(true);
-  }, [prompt, objective]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,6 +168,8 @@ Quando o usuário perguntar sobre código..."
                 onApplyAll={handleApplyAll}
                 appliedIds={appliedIds}
                 isAnalyzing={isAnalyzing}
+                score={analysisScore}
+                summary={analysisSummary}
               />
             )}
           </div>
