@@ -91,17 +91,23 @@
 
   .glow-border::before {
     content: '';
-    @apply absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300;
+    @apply absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 pointer-events-none;
     background: var(--gradient-primary);
     padding: 1px;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
+    z-index: 0;
   }
 
   .glow-border:hover::before {
     @apply opacity-100;
+  }
+
+  .glow-border > * {
+    @apply relative;
+    z-index: 1;
   }
 
   .editor-area {
